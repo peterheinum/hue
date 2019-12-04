@@ -23,11 +23,10 @@ function saveAudio() {
 
 function gotBuffers(buffers) {
   var canvas = document.getElementById("wavedisplay")
-  console.log(canvas)
   drawBuffer(canvas.width, canvas.height, canvas.getContext('2d'), buffers[0])
   // the ONLY time gotBuffers is called is right after a new recording is completed - 
   // so here's where we should set up the download.
-  audioRecorder.exportWAV(doneEncoding)
+  // audioRecorder.exportWAV(doneEncoding)
 }
 
 function doneEncoding(blob) {
@@ -36,15 +35,13 @@ function doneEncoding(blob) {
 }
 
 setInterval(() => {
-  
-
-  console.log('hello there')
   audioRecorder.record()
   setTimeout(() => {
     audioRecorder.stop()
     audioRecorder.getBuffers(gotBuffers)
-  }, 500);
-}, 2000);
+    audioRecorder.clear()
+  }, 300);
+}, 400);
 
 function toggleRecording(e) {
   if (e.classList.contains("recording")) {
@@ -158,7 +155,20 @@ function initAudio() {
     navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame
   if (!navigator.requestAnimationFrame)
     navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame
-
+  navigator.getUserMedia({
+    "audio": {
+      "mandatory": {
+        "googEchoCancellation": "false",
+        "googAutoGainControl": "false",
+        "googNoiseSuppression": "false",
+        "googHighpassFilter": "false"
+      },
+      "optional": []
+    },
+  }, gotStream, function (e) {
+    alert('Error getting audio')
+    console.log(e)
+  })
   navigator.getUserMedia(
     {
       "audio": {
