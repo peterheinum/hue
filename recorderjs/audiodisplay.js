@@ -20,7 +20,6 @@ const setLights = async ({ id, temperature, color }) => {
   }
 }
 
-
 function drawBuffer(data) {
   let temperature = 0;
 

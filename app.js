@@ -19,8 +19,8 @@ setInterval(() => {
     audioRecorder.stop()
     audioRecorder.getBuffers(gotBuffers)
     audioRecorder.clear()
-  }, 900);
-}, 1000);
+  }, 200);
+}, 300);
 
 function gotStream(stream) {
   inputPoint = audioContext.createGain()
