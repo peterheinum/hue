@@ -34,7 +34,7 @@ setInterval(() => {
     audioRecorder.getBuffers(gotBuffers)
     audioRecorder.clear()
   }, 500);
-}, 2000);
+}, 1000);
 
 function cancelAnalyserUpdates() {
   window.cancelAnimationFrame(rafID)
@@ -47,38 +47,27 @@ const clear = () => colorArray.splice(0, colorArray.length)
 // setInterval(() => changeLights(colorArray), 1000);
 
 function updateAnalysers(time) {
-  if (!analyserContext) {
-    var canvas = document.getElementById("analyser")
-    canvasWidth = canvas.width
-    canvasHeight = canvas.height
-    analyserContext = canvas.getContext('2d')
-  }
   clear()
-  // analyzer draw code here
-  var SPACING = 5
-  var BAR_WIDTH = 4
-  var numBars = Math.round(canvasWidth / SPACING)
+  const SPACING = 5
+  const numBars = Math.round(canvasWidth / SPACING)
 
-  var freqByteData = new Uint8Array(analyserNode.frequencyBinCount)
+  let freqByteData = new Uint8Array(analyserNode.frequencyBinCount)
   analyserNode.getByteFrequencyData(freqByteData)
-  // analyserContext.clearRect(0, 0, canvasWidth, canvasHeight)
-  analyserContext.fillStyle = '#F6D565'
-  analyserContext.lineCap = 'round'
-  var multiplier = analyserNode.frequencyBinCount / numBars
+  const multiplier = analyserNode.frequencyBinCount / numBars
   // Draw rectangle for each frequency bin.
-  for (var i = 0; i < numBars; ++i) {
-    var magnitude = 0
-    var offset = Math.floor(i * multiplier)
+  for (let i = 0; i < numBars; ++i) {
+    let magnitude = 0
+    let offset = Math.floor(i * multiplier)
     // gotta sum/average the block, or we miss narrow-bandwidth spikes
-    for (var j = 0; j < multiplier; j++)
+    for (let j = 0; j < multiplier; j++)
       magnitude += freqByteData[offset + j]
+    
+
     magnitude = magnitude / multiplier
     colorArray.push({
       color: i > 40 ? 'red' : i > 20 ? 'green' : 'blue',
       magnitude
     })
-    // analyserContext.fillStyle = "hsl( " + Math.round((i * 360) / numBars) + ", 100%, 50%)"
-    // analyserContext.fillRect(i * SPACING, canvasHeight, BAR_WIDTH, -magnitude)
   }
 
   rafID = window.requestAnimationFrame(updateAnalysers)
