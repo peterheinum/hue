@@ -28,7 +28,7 @@ const spin = color_array => {
   setInterval(() => {
     color_array.move(2, 0)
     color_array.forEach((color, i) => {
-      const id = i+1
+      const id = i + 1
       setLights({ id, temperature: 0.3, color })
     })
   }, 10000);
@@ -56,64 +56,149 @@ function drawBuffer(data) {
   if (color < 1000 || color > 65535) {
     color = Math.floor(temperature * 65535)
   }
-  
+
   // _lights().forEach(id => {
   //   setLights({ id, temperature, color })
   // })
 
-  setLights({ id: 1, temperature, color: 65000-color })
-  setLights({ id: 2, temperature, color: 65000-color })
-  setLights({ id: 3, temperature, color: 48000-color })  
+  setLights({ id: 1, temperature, color: 65000 - color })
+  setLights({ id: 2, temperature, color: 65000 - color })
+  setLights({ id: 3, temperature, color: 48000 - color })
   _color = color
   _temperature = temperature
 }
 
 
-const getInternalIp = async () => {
+const get_internal_ip = async () => {
   const url = 'https://discovery.meethue.com/'
   const [res] = await get({ url, method: 'GET' })
-  const { internalipaddress } = res  
+  const { internalipaddress } = res
   localStorage.setItem('internalipaddress', internalipaddress)
   return Promise.resolve()
 }
 
-const validateAgainstHue = async () => {
+const get_hue_token = async () => {
   const url = `http://${localStorage.getItem('internalipaddress')}/api/`
-  const response = await get({ url, body: {"devicetype":"my_hue_app#1337"}, method: 'POST'})
-  localStorage.setItem('api_key', response)
+  const [response] = await get({ url, body: { "devicetype": "my_hue_app#1337" }, method: 'POST' })
+  const { error, success } = response
+  if(!error) {
+    const { username } = success
+    localStorage.setItem('api_key', username)
+    return Promise.resolve()
+  }
+
+  else {
+    return Promise.reject(error)
+  }
 }
 
-const setupLights = async () => {
+const setup_lights = async () => {
   const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/`
   const method = 'GET'
   const result = await get({ url, method })
   localStorage.setItem('lights', Object.keys(result))
+  return Promise.resolve()
 }
 
 const startLoading = () => {
-  
+  //TODO add nice css animations
 }
 
 const stopLoading = () => {
-
+  //TODO remove nice css animations
+  _lights().forEach(id => {
+    setLights({id, temperature: 0.2, color: 33000})
+  })
 }
+
 
 const connect = async () => {
   startLoading()
-  // await getInternalIp()
-  // await validateAgainstHue()
-  await setupLights()
-  stopLoading()
+  await get_internal_ip()
+  get_hue_token().then(async () => {
+    await setup_lights()
+    stopLoading()
+  }).catch(error => {
+    console.log(error)
+  })
 }
 
-const _red = temp => 24000 * temp + 40000
-const _green = temp => 24000 * temp + 20000
-const _blue = temp => 24000 * temp
+const explosion_colors = ['#57a1ff', '#33629e', '#1c395e']
+const bubbles = 25;
 
+const explode = (x, y) => {
+  let particles = [];
+  let ratio = window.devicePixelRatio;
+  let c = document.createElement('canvas');
+  let ctx = c.getContext('2d');
 
+  c.style.position = 'absolute';
+  c.style.left = (x - 100) + 'px';
+  c.style.top = (y - 100) + 'px';
+  c.style.pointerEvents = 'none';
+  c.style.width = 200 + 'px';
+  c.style.height = 200 + 'px';
+  c.style.zIndex = 100;
+  c.width = 200 * ratio;
+  c.height = 200 * ratio;
+  document.body.appendChild(c);
 
+  for (var i = 0; i < bubbles; i++) {
+    particles.push({
+      x: c.width / 2,
+      y: c.height / 2,
+      radius: r(20, 30),
+      color: explosion_colors[Math.floor(Math.random() * explosion_colors.length)],
+      rotation: r(0, 360, true),
+      speed: r(8, 12),
+      friction: 0.9,
+      opacity: r(0, 0.5, true),
+      yVel: 0,
+      gravity: 0.1
+    });
+  }
 
+  render(particles, ctx, c.width, c.height);
+  setTimeout(() => document.body.removeChild(c), 1000);
+}
 
+const render = (particles, ctx, width, height) => {
+  requestAnimationFrame(() => render(particles, ctx, width, height));
+  ctx.clearRect(0, 0, width, height);
+
+  particles.forEach((p, i) => {
+    p.x += p.speed * Math.cos(p.rotation * Math.PI / 180);
+    p.y += p.speed * Math.sin(p.rotation * Math.PI / 180);
+
+    p.opacity -= 0.01;
+    p.speed *= p.friction;
+    p.radius *= p.friction;
+    p.yVel += p.gravity;
+    p.y += p.yVel;
+
+    if (p.opacity < 0 || p.radius < 0) return;
+
+    ctx.beginPath();
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = p.color;
+    ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, false);
+    ctx.fill();
+  });
+
+  return ctx;
+}
+
+const r = (a, b, c) => parseFloat((Math.random() * ((a ? a : 1) - (b ? b : 0)) + (b ? b : 0)).toFixed(c ? c : 0));
+
+let interval = setInterval(() => {
+  let element = document.querySelector('#connectBtn')
+  if(element) {
+    element.addEventListener('click', e => explode(e.pageX, e.pageY));
+    clearInterval(interval)
+  }
+}, 1000)
+
+// document.getElementById('connectBtn').addEventListener('mouseover', e => explode(e.pageX, e.pageY));
 
 
 
@@ -126,7 +211,7 @@ const _blue = temp => 24000 * temp
 //     if(i < 20) {
 //       data[i].magnitude && array1.push(data[i].magnitude)
 //     }
-    
+
 //     else if(i < 40) {
 //       data[i].magnitude && array2.push(data[i].magnitude)
 //     }

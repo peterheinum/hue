@@ -8,8 +8,8 @@ body {
 
 button {
     border: none;
-    width:30vw;
-    height:30vw;
+    width:500px;
+    height:500px;
     border-radius:100%;
     text-decoration: none;
     background: #0069ed;
@@ -30,11 +30,9 @@ button:focus {
 }
 
 button:focus {
-    outline: 1px solid #fff;
-    outline-offset: -4px;
+    outline:0;
 }
 
 button:active {
     transform: scale(0.99);
 }
-
