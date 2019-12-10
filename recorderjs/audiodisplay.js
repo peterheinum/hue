@@ -170,13 +170,9 @@ const drawBuffer = data => {
 
   const colors = _lights().map((_, i) => 65000 / (i + 1))
   _lights().forEach((id, i) => {
-    setLights({ id, temperature, color: colors[i] - color })
+    setLights({ id, temperature, color })
   })
 
-
-  // setLights({ id: 1, temperature, color: 65000 - color })
-  // setLights({ id: 2, temperature, color: 65000 - color })
-  // setLights({ id: 3, temperature, color: 48000 - color })
   _color = color
   _temperature = temperature
 }

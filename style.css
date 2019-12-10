@@ -30,7 +30,7 @@ button:focus {
 }
 
 button:focus {
-    outline:0;
+    outline: 0px solid transparent;
 }
 
 button:active {
