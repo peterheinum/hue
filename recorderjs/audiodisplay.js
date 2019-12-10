@@ -5,7 +5,7 @@ let _temperature = 0
 let _color = 0
 
 const getLights = async id => {
-  const url = `https://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/`
+  const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/`
   const method = 'GET'
   const result = await get({ url, method })
   return Promise.resolve(result)
@@ -13,7 +13,7 @@ const getLights = async id => {
 
 const setLights = async ({ id, temperature, color }) => {
   if (temperature - _temperature > 0.05 || temperature - _temperature < -0.05) {
-    const url = `https://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/state`
+    const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/state`
     const body = { 'on': true, 'sat': 254, 'bri': Math.floor(200 * temperature), "hue": color }
     const method = 'PUT'
     get({ url, body, method })
@@ -36,9 +36,8 @@ const spin = () => {
       setLights({id, temperature: 0.5, color })
     })
     spins++
-    spins == 30 && clearInterval(interval)
-  }, 2000)
-  console.log(colors)
+    spins == 100 && clearInterval(interval)
+  }, 1000)
 }
 
 
@@ -94,7 +93,7 @@ const get_internal_ip = async () => {
 
 const get_hue_token = async () => {
   if (localStorage.getItem('api_key')) return Promise.resolve()
-  const url = `https://${localStorage.getItem('internalipaddress')}/api/`
+  const url = `http://${localStorage.getItem('internalipaddress')}/api/`
   const [response] = await get({ url, body: { "devicetype": "my_hue_app#1337" }, method: 'POST' })
   const { error, success } = response
   if (!error) {
@@ -109,7 +108,7 @@ const get_hue_token = async () => {
 
 const setup_lights = async () => {
   if (localStorage.getItem('api_key')) {
-    const url = `https://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/`
+    const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/`
     const method = 'GET'
     const result = await get({ url, method })
     localStorage.setItem('lights', Object.keys(result))
