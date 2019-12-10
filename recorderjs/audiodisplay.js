@@ -1,5 +1,5 @@
 const get = async ({ url, body, method }) => await fetch(url, { body: JSON.stringify(body), method }).then(res => res.json())
-const _lights = () => localStorage.getItem('lights').split(',')
+const _lights = () => localStorage.getItem('lights') ? localStorage.getItem('lights').split(',') : []
 
 let _temperature = 0
 let _color = 0
@@ -24,18 +24,129 @@ Array.prototype.move = function (from, to) {
   this.splice(to, 0, this.splice(from, 1)[0]);
 };
 
-const spin = color_array => {
-  setInterval(() => {
-    color_array.move(2, 0)
-    color_array.forEach((color, i) => {
-      const id = i + 1
-      setLights({ id, temperature: 0.3, color })
+const spin = () => {
+  const colors = []
+  _lights().forEach((_, i) => i == 0 ? colors.push(65000) : colors.push(48000))
+
+  let spins = 0
+  let interval = setInterval(() => {
+    colors.move(0, colors.length-1)
+    _lights().forEach((id, i) => {
+      const color = colors[i]
+      setLights({id, temperature: 0.5, color })
     })
-  }, 10000);
+    spins++
+    spins == 30 && clearInterval(interval)
+  }, 2000)
+  console.log(colors)
 }
 
-function drawBuffer(data) {
-  let temperature = 0;
+
+let errorActive = false
+
+const create_error = ({ text = 'error', font_size }) => {
+  errorActive = true
+  let el = document.querySelector('#connectBtn')
+  el.style.backgroundColor = '#e6172f'
+
+  setTimeout(() => {
+    explosion_colors.splice(0, explosion_colors.length)
+    explosion_colors.push('#f2465a', '#a82f3d', '#781722')
+  }, 50);
+
+  el.innerHTML = text
+  font_size && (el.style.fontSize = font_size + 'px')
+
+  setTimeout(() => {
+    errorActive = false
+    el.style.fontSize = '2rem'
+    el.style.backgroundColor = '#0069ed'
+    el.innerHTML = 'Connect'
+    explosion_colors.splice(0, explosion_colors.length)
+    explosion_colors.push('#57a1ff', '#33629e', '#1c395e')
+  }, 5000);
+}
+
+const create_success = () => {
+  let el = document.querySelector('#connectBtn')
+  el.style.backgroundColor = '#18ed51'
+  el.innerHTML = 'Connected'
+
+  explosion_colors.splice(0, explosion_colors.length)
+  explosion_colors.push('#32c259', '#1d8238', '#51f07c')
+  spin()
+}
+
+const get_internal_ip = async () => {
+  if (localStorage.getItem('internalipaddress')) return Promise.resolve()
+  const url = 'https://discovery.meethue.com/'
+  const [res] = await get({ url, method: 'GET' })
+
+  if (res) {
+    const { internalipaddress } = res
+    localStorage.setItem('internalipaddress', internalipaddress)
+    return Promise.resolve()
+  }
+  else {
+    create_error({ text: 'No hue found', font_size: 18 })
+  }
+}
+
+const get_hue_token = async () => {
+  if (localStorage.getItem('api_key')) return Promise.resolve()
+  const url = `http://${localStorage.getItem('internalipaddress')}/api/`
+  const [response] = await get({ url, body: { "devicetype": "my_hue_app#1337" }, method: 'POST' })
+  const { error, success } = response
+  if (!error) {
+    const { username } = success
+    localStorage.setItem('api_key', username)
+    return Promise.resolve()
+  }
+  else {
+    create_error({ text: 'Click connect on bridge', font_size: 24 })
+  }
+}
+
+const setup_lights = async () => {
+  if (localStorage.getItem('api_key')) {
+    const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/`
+    const method = 'GET'
+    const result = await get({ url, method })
+    localStorage.setItem('lights', Object.keys(result))
+  }
+  return Promise.resolve()
+}
+
+const startLoading = () => {
+  //TODO add nice css animations
+}
+
+const stopLoading = () => {
+  //TODO remove nice css animations
+  _lights().forEach(id => {
+    setLights({ id, temperature: 0.2, color: 33000 })
+  })
+}
+
+const legit_session = () => {
+  const { internalipaddress, api_key, lights } = localStorage
+  return internalipaddress && api_key && lights
+}
+
+const connect = async () => {
+  if (errorActive) return
+  legit_session()
+    ? create_success()
+    : await get_internal_ip()
+  await get_hue_token()
+  await setup_lights()
+  legit_session() && create_success()
+}
+
+
+const drawBuffer = data => {
+  if (!legit_session()) return
+  let temperature = 0
 
   for (let i = 0; i < data.length; i++) {
     if (temperature < data[i]) {
@@ -57,71 +168,20 @@ function drawBuffer(data) {
     color = Math.floor(temperature * 65535)
   }
 
-  // _lights().forEach(id => {
-  //   setLights({ id, temperature, color })
-  // })
+  const colors = _lights().map((_, i) => 65000 / (i + 1))
+  _lights().forEach((id, i) => {
+    setLights({ id, temperature, color: colors[i] - color })
+  })
 
-  setLights({ id: 1, temperature, color: 65000 - color })
-  setLights({ id: 2, temperature, color: 65000 - color })
-  setLights({ id: 3, temperature, color: 48000 - color })
+
+  // setLights({ id: 1, temperature, color: 65000 - color })
+  // setLights({ id: 2, temperature, color: 65000 - color })
+  // setLights({ id: 3, temperature, color: 48000 - color })
   _color = color
   _temperature = temperature
 }
 
 
-const get_internal_ip = async () => {
-  const url = 'https://discovery.meethue.com/'
-  const [res] = await get({ url, method: 'GET' })
-  const { internalipaddress } = res
-  localStorage.setItem('internalipaddress', internalipaddress)
-  return Promise.resolve()
-}
-
-const get_hue_token = async () => {
-  const url = `http://${localStorage.getItem('internalipaddress')}/api/`
-  const [response] = await get({ url, body: { "devicetype": "my_hue_app#1337" }, method: 'POST' })
-  const { error, success } = response
-  if(!error) {
-    const { username } = success
-    localStorage.setItem('api_key', username)
-    return Promise.resolve()
-  }
-
-  else {
-    return Promise.reject(error)
-  }
-}
-
-const setup_lights = async () => {
-  const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/`
-  const method = 'GET'
-  const result = await get({ url, method })
-  localStorage.setItem('lights', Object.keys(result))
-  return Promise.resolve()
-}
-
-const startLoading = () => {
-  //TODO add nice css animations
-}
-
-const stopLoading = () => {
-  //TODO remove nice css animations
-  _lights().forEach(id => {
-    setLights({id, temperature: 0.2, color: 33000})
-  })
-}
-
-
-const connect = async () => {
-  startLoading()
-  await get_internal_ip()
-  get_hue_token().then(async () => {
-    await setup_lights()
-    stopLoading()
-  }).catch(error => {
-    console.log(error)
-  })
-}
 
 const explosion_colors = ['#57a1ff', '#33629e', '#1c395e']
 const bubbles = 25;
@@ -192,16 +252,16 @@ const r = (a, b, c) => parseFloat((Math.random() * ((a ? a : 1) - (b ? b : 0)) +
 
 let interval = setInterval(() => {
   let element = document.querySelector('#connectBtn')
-  if(element) {
+  if (element) {
     element.addEventListener('click', e => explode(e.pageX, e.pageY));
     clearInterval(interval)
   }
 }, 1000)
 
+
+//Further develop this to make nice
+
 // document.getElementById('connectBtn').addEventListener('mouseover', e => explode(e.pageX, e.pageY));
-
-
-
 // function changeLights(data) {
 //   const array1 = []
 //   const array2 = []

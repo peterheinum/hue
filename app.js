@@ -27,14 +27,14 @@ function gotBuffers(buffers) {
   //buffers[0] == left && buffers[1] == right 
 }
 
-// setInterval(() => {
-//   audioRecorder.record()
-//   setTimeout(() => {
-//     audioRecorder.stop()
-//     audioRecorder.getBuffers(gotBuffers)
-//     audioRecorder.clear()
-//   }, 500);
-// }, 1000);
+setInterval(() => {
+  audioRecorder.record()
+  setTimeout(() => {
+    audioRecorder.stop()
+    audioRecorder.getBuffers(gotBuffers)
+    audioRecorder.clear()
+  }, 500);
+}, 1000);
 
 function cancelAnalyserUpdates() {
   window.cancelAnimationFrame(rafID)
