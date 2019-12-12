@@ -4,8 +4,11 @@ const _lights = () => localStorage.getItem('lights') ? localStorage.getItem('lig
 let _temperature = 0
 let _color = 0
 
+//const BASE_URL = `http://${localStorage.getItem('internalipaddress')}`
+const BASE_URL = ''
+
 const getLights = async id => {
-  const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/`
+  const url = `${BASE_URL}/api/${localStorage.getItem('api_key')}/lights/${id}/`
   const method = 'GET'
   const result = await get({ url, method })
   return Promise.resolve(result)
@@ -13,7 +16,7 @@ const getLights = async id => {
 
 const setLights = async ({ id, temperature, color }) => {
   if (temperature - _temperature > 0.05 || temperature - _temperature < -0.05) {
-    const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/state`
+    const url = `${BASE_URL}/api/${localStorage.getItem('api_key')}/lights/${id}/state`
     const body = { 'on': true, 'sat': 254, 'bri': Math.floor(200 * temperature), "hue": color }
     const method = 'PUT'
     get({ url, body, method })
@@ -93,7 +96,7 @@ const get_internal_ip = async () => {
 
 const get_hue_token = async () => {
   if (localStorage.getItem('api_key')) return Promise.resolve()
-  const url = `http://${localStorage.getItem('internalipaddress')}/api/`
+  const url = `${BASE_URL}/api/`
   const [response] = await get({ url, body: { "devicetype": "my_hue_app#1337" }, method: 'POST' })
   const { error, success } = response
   if (!error) {
@@ -108,7 +111,7 @@ const get_hue_token = async () => {
 
 const setup_lights = async () => {
   if (localStorage.getItem('api_key')) {
-    const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/`
+    const url = `${BASE_URL}/api/${localStorage.getItem('api_key')}/lights/`
     const method = 'GET'
     const result = await get({ url, method })
     localStorage.setItem('lights', Object.keys(result))
