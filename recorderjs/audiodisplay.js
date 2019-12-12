@@ -4,16 +4,6 @@ const _lights = () => localStorage.getItem('lights') ? localStorage.getItem('lig
 let _temperature = 0
 let _color = 0
 
-const getHTTP = async () => {
-  const resp = await get({
-    url: "/?",
-    method: "GET"
-  })
-  
-  console.log(resp)
-}
-getHTTP()
-
 const getLights = async id => {
   const url = `http://${localStorage.getItem('internalipaddress')}/api/${localStorage.getItem('api_key')}/lights/${id}/`
   const method = 'GET'
