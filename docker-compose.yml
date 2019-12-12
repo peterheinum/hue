@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  web-srv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./nginx-dev.conf:/config.template
+      - ./cert.crt:/etc/nginx/cert.crt
+      - ./cert.key:/etc/nginx/cert.key
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    command:  ["/app/entrypoint.sh"]
