@@ -7,9 +7,9 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
-      - ./nginx-dev.conf:/config.template
-      - ./cert.crt:/etc/nginx/cert.crt
-      - ./cert.key:/etc/nginx/cert.key
+      - ./nginx/config.template:/config.template
+      - ./nginx/cert.crt:/etc/nginx/cert.crt
+      - ./nginx/cert.key:/etc/nginx/cert.key
     env_file:
       - .env
     ports:
